@@ -23,7 +23,7 @@ services:
 
   spring_app:
    image: ihebharrath/repo1
-   container_name: achat
+   
    ports:
     - 8089:8089
    environment:
