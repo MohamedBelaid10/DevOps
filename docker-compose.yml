@@ -1,38 +1,35 @@
-version: "3.7"
+version: "3"
 
 services:
-  mysqldb1:
-   container_name: mysqldb1
-   image: mysql:5.6
-   restart: always
-   environment:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: tpachato
-    MYSQL_ROOT: root
-    MYSQL_PASSWORD: root
-    MYSQL_HOST: mysqldb1
-   ports:
-    - "4000:3306"    
+  mysqldb:
+    image: mysql:5.7
+    restart: unless-stopped
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_DATABASE=test
+    ports:
+      - "4000:3306"
+    volumes:
+      - db:/var/lib/mysql
+  app:
+    depends_on:
+      - mysqldb
+    image: 'ihebharrath/repo1'
+    build:
+      context: .
 
-   healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-      timeout: 20s
-      retries: 10
-   volumes:
-     - /home/mysql/data:/var/lib/mysql --user 1000
-
-  spring_app:
-   image: ihebharrath/repo1
-   
-   ports:
-    - 8089:8089
-   environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb1:3306/tpachato?createDatabaseIfNotExist=true&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_PASSWORD: root
-      MYSQL_DATABASE: tpachato
-   restart: on-failure
-   links:
-      - mysqldb1
+    restart: on-failure
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.datasource.url"  : "jdbc:mysql://mysqldb:3306/test?useSSL=false",
+        "spring.datasource.username" : "root",
+        "spring.datasource.password" : "",
+        "spring.jpa.properties.hibernate.dialect" : "org.hibernate.dialect.MySQL5InnoDBDialect",
+        "spring.jpa.hibernate.ddl-auto" : "update"
+      }'
+    stdin_open: true
+    tty: true
+volumes:
+  db:
